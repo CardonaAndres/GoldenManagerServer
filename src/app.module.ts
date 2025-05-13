@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DB_CREDENTIALS } from './app/configs/config';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -14,8 +16,10 @@ import { DB_CREDENTIALS } from './app/configs/config';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize : DB_CREDENTIALS.synchronize,
       autoLoadEntities : DB_CREDENTIALS.autoLoadEntities,
-      logging : true,
-    })
+      logging : false,
+    }),
+    AuthModule,
+    UsersModule
   ],
   controllers: [],
   providers: [],
