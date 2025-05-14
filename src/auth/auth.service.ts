@@ -15,7 +15,8 @@ export class AuthService {
 
     async login(loginData : LoginDto){
         const { user } = await this.userService.getUserByProperty('email', loginData.email);
-        if(!user) throw { message : 'Usuario no encontrado', status : 404 };
+        if(!user || user.status_ID !== 1) 
+            throw { message : 'Usuario no encontrado', status : 404 };
 
         const isPasswordValid = await bcrypt.compare(loginData.password, user.password);
         if(!isPasswordValid) throw { message : 'Contraseña incorrecta', status : 401 };

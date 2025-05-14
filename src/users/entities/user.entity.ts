@@ -21,5 +21,8 @@ export class User {
     role_ID : number;
 
     @Column()
+    status_ID : number;
+
+    @Column()
     created_at : Date = new Date();
 }

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Roles } from '../ts/enums';
+import { Roles, UserStatus } from '../ts/enums';
 import {
   IsEmail,
   IsNotEmpty,
@@ -49,6 +49,11 @@ export class CreateUserDto {
   @Min(1, { message: 'El ID de rol debe ser mayor o igual a 1.' })
   @Max(3, { message: 'El ID de rol debe ser menor o igual a 3.' }) // ajusta según los roles
   role_ID: number = Roles.USER;
+
+  @IsNumber({}, { message: 'El ID del estado debe ser un número.' })
+  @Min(1, { message: 'El ID del estado debe ser mayor o igual a 1.' })
+  @Max(3, { message: 'El ID del estado debe ser menor o igual a 3.' }) // ajusta según los roles
+  status_ID: number = UserStatus.ACTIVE;
 
   @IsOptional()
   created_at: Date = new Date();
