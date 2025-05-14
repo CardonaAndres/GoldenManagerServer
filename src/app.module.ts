@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DB_CREDENTIALS } from './app/configs/config';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { StoresModule } from './stores/stores.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { UsersModule } from './users/users.module';
       logging : false,
     }),
     AuthModule,
-    UsersModule
+    UsersModule,
+    StoresModule
   ],
   controllers: [],
   providers: [],

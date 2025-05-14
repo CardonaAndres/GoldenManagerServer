@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import { Store } from "src/stores/entities/store.entity";
+import { Column, Entity, JoinColumn, OneToMany, PrimaryColumn } from "typeorm";
 
 @Entity({ name : 'users' })
 export class User {
@@ -25,4 +26,8 @@ export class User {
 
     @Column()
     created_at : Date = new Date();
+
+    @OneToMany(() => Store, store => store.user_owner_ID)
+    @JoinColumn({ name : 'user_owner_ID' })
+    stores : Store[]
 }
