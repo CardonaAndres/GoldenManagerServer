@@ -1,5 +1,6 @@
 export const PORT = process.env.PORT ?? 3000
 export const CLIENTS_ORIGINS = [];
+export const SECRET_KEY = process.env.SECRET_KEY || 'secret';
 
 export const DB_CREDENTIALS = {
     type: 'postgres' as const,
