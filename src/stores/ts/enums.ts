@@ -1,8 +1,8 @@
 export const enum StoreStatus {
-    ACTIVE = 'active',
-    INACTIVE = 'inactive',
-    PENDING = 'pending',
-    SUSPENDED = 'suspended',
-    DELETED = 'deleted',
-    BLOCKED = 'blocked',
+    ACTIVE = 1,
+    INACTIVE = 2,
+    PENDING = 3,
+    SUSPENDED = 4,
+    DELETED = 5,
+    BLOCKED = 6,
 }

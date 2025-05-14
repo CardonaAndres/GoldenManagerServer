@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { StoreStatus } from '../ts/enums';
 import {
   IsOptional,
   IsString,
@@ -44,10 +45,12 @@ export class CreateStoreDto {
   @ApiProperty({
     example: 1,
     description: 'ID del estado de la tienda (por ejemplo: 1 = activa, 2 = inactiva)',
+    required: false,
   })
+  @IsOptional()
   @IsNumber({}, { message: 'El estado debe ser un número.' })
   @IsInt({ message: 'El estado debe ser un número entero.' })
-  status_ID: number;
+  status_ID: number = StoreStatus.PENDING;
 
   @ApiProperty({
     example: 'logo123.jpg',

@@ -18,7 +18,7 @@ export class StoresController {
   @UseGuards(CheckSellerGuard)
   @ApiOperation({ summary : 'Registrar una nueva tienda' })
   @UseInterceptors(FileInterceptor('logo',{
-    storage: logoStorage('./uploads/logos'),
+    storage: logoStorage('src/stores/uploads/logos'),
     limits: { fileSize: 2 * 1024 * 1024 },
     fileFilter: imageFileFilter
   }))
