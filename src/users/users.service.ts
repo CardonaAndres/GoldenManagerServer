@@ -4,9 +4,10 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Not, Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { ChangePasswordDto } from 'src/auth/dto/change.password.dto';
 import { PaginationDto } from 'src/app/dtos/pagination.dto';
+import { UserStatus } from './ts/enums';
 
 @Injectable()
 export class UsersService {
@@ -14,10 +15,14 @@ export class UsersService {
 
   async profile(req : any){
     const user = await this.conn.findOne({
-      where : { user_ID : req.user.user_ID }
+      where : { 
+          user_ID : req.user.user_ID ,
+          status_ID : Not(In([UserStatus.INACTIVE, UserStatus.BLOCKED]))
+        }   
     });
 
-    if(!user) throw { message : 'Usuario no encontrado', status : 404 };
+    if(!user) 
+      throw { message : 'Usuario no encontrado o esta bloqueado o inactivo', status : 404 };
 
     // Eliminar contraseña del objeto de respuesta
     const { password, ...userWithoutPassword } = user;
@@ -28,7 +33,7 @@ export class UsersService {
     }
   }
 
-  async AllUsers(pagination : PaginationDto, req : any) {
+  async allUsers(pagination : PaginationDto, req : any) {
     const { page, limit } = pagination;
 
     const [ users, total ] = await this.conn.findAndCount({
@@ -55,6 +60,24 @@ export class UsersService {
       }
     }
     
+  }
+
+  async allUsersWithoutPagination(){
+    const users = await this.conn.find({
+      where : {
+          status_ID : Not(In([UserStatus.INACTIVE, UserStatus.BLOCKED]))
+        }
+    });
+
+    const usersWithoutPassword = users.map(user => {
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    });
+
+    return {
+      message : 'Usuarios encontrados',
+      users : usersWithoutPassword
+    }
   }
 
   async registerUser(user : CreateUserDto){
@@ -102,9 +125,15 @@ export class UsersService {
     if(!propertiesAllowed.includes(property))
       throw { message : 'Esta propiedad no es valida', status : 400 };
 
-    const user = await this.conn.findOne({ where : { [property] : value } });
+    const user = await this.conn.findOne({ 
+      where : { 
+        [property] : value,
+        status_ID : Not(In([UserStatus.INACTIVE, UserStatus.BLOCKED])) 
+      } 
+    });
 
-    if(!user) throw { message : 'Usuario no encontrado', status : 404 };
+    if(!user) 
+      throw { message : 'Usuario no encontrado', status : 404 };
     
     return {
       mesage : 'Usuario encontrado',
@@ -116,11 +145,13 @@ export class UsersService {
   async changePassword(userData : ChangePasswordDto) {
     const user = await this.conn.findOne({
       where : {
-        email : userData.email
+        email : userData.email,
+        status_ID : Not(In([UserStatus.INACTIVE, UserStatus.BLOCKED]))
       }
     });
 
-    if(!user) throw { message : 'El usuario no existe', status : 404 }
+    if(!user) 
+      throw { message : 'El usuario no existe o esta desactivado o bloqueado', status : 404 }
 
     const isSamePassword = await bcrypt.compare(
       userData.newPassword, user.password
@@ -143,11 +174,14 @@ export class UsersService {
   async updateUser(user_ID : string, body : UpdateUserDto){
     
     const userExist = await this.conn.findOne({
-      where : { user_ID}
+      where : {
+          user_ID : user_ID,
+          status_ID : Not(In([UserStatus.INACTIVE, UserStatus.BLOCKED]))
+        },
     });
 
     if(!userExist) 
-      throw { message : 'El usuario no existe', status : 404 };
+      throw { message : 'El usuario no existe o se encuentra bloqueado o inactivo', status : 404 };
 
     if(body.user_ID && body.user_ID !== userExist.user_ID) 
       throw { message : 'No puedes cambiar documento, por favor hablar con soporte', status : 400 };
@@ -189,4 +223,66 @@ export class UsersService {
     }
 
   }
-}
+
+  async updateUserByAdmin(body : UpdateUserDto){
+    const userExist = await this.conn.findOne({
+      where : { user_ID : body.user_ID }
+    });
+
+    if(!userExist) throw { message : 'El usuario no existe', status : 404 };
+
+    const user = Object.assign(userExist, body);
+
+    // Verificar correo
+    const emailInUse = await this.conn.findOne({
+      where : { 
+        email : user.email,
+        user_ID : Not(user.user_ID) 
+      }
+    });
+
+    if(emailInUse) throw { message : 'El correo ya esta registrado', status : 400 };
+
+    // Verificar celular
+    const cellphoneInUse = await this.conn.findOne({
+      where : { 
+        email : user.cellphone,
+        user_ID : Not(user.user_ID) 
+      }
+    });
+
+    if(cellphoneInUse) throw { message : 'El celular ya esta registrado', status : 400 };
+
+    // Actualizar usuario
+    await this.conn.update(user.user_ID, {
+      ...user,
+    });
+
+    return {
+      message : 'Usuario actualizado correctamente'
+    }
+
+  }   
+  
+  async inactiveUser(user_ID : string){
+    const user = await this.conn.findOne({
+      where : {
+          user_ID : user_ID,
+          status_ID : Not(In([UserStatus.INACTIVE, UserStatus.BLOCKED]))
+        }
+    });
+
+    if(!user) 
+      throw { message : 'El usuario no existe o se encuentra inactivo o bloqueado', status : 404 };
+
+    await this.conn.update(user_ID, {
+      status_ID : UserStatus.INACTIVE
+    });
+
+    return {
+      message : 'Su usuario ha sido desactivado correctamente',
+    }
+
+  }
+
+}                     

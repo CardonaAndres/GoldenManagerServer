@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query } from '@nestjs/common';
+import { Controller, Get, Body, Patch, UseGuards, Req, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -28,16 +28,52 @@ export class UsersController {
   @UseGuards(CheckAdminRoleGuard)
   async AllUsers(@Query() pagination : PaginationDto, @Req() req : any){
     try {
-      return await this.usersService.AllUsers(pagination, req);
+      return await this.usersService.allUsers(pagination, req);
     } catch (err : any) {
       errorHandler(err);
     }
   }
 
-  @Patch('/:user_ID')
-  async updateUser(@Param('user_ID') user_ID : string, @Body() user : UpdateUserDto){
+  @Get('/all/without-paginate')
+  @ApiOperation({ 
+    summary : 'Obtener todos los usuarios sin paginacion', description : 'Solo para administradores' 
+  })
+  @UseGuards(CheckAdminRoleGuard)
+  async AllUsersWithoutPaginate(){
     try {
-        return await this.usersService.updateUser(user_ID, user);
+      return await this.usersService.allUsersWithoutPagination();
+    } catch (err : any) {
+      errorHandler(err);
+    }
+  }
+
+  @Patch('/')
+  @ApiOperation({ summary : 'Actualizar usuario' })
+  async updateUser(@Body() user : UpdateUserDto, @Req() req : any){
+    try {
+        return await this.usersService.updateUser(req.user.user_ID, user);
+    } catch (err : any) {
+      errorHandler(err);
+    }
+  }
+
+  // El administrador podra actualizar cualquier usuario, ademas de su estado, rol y número de documento
+  @Patch('/by-admin/')
+  @ApiOperation({ summary : 'Actualizar usuario por admin', description : 'Solo para administradores' })
+  @UseGuards(CheckAdminRoleGuard)
+  async updateUserByAdmin(@Body() user : UpdateUserDto){
+    try {
+        return await this.usersService.updateUserByAdmin(user);
+    } catch (err : any) {
+      errorHandler(err);
+    }
+  }
+
+  @Patch('/inactive')
+  @ApiOperation({ summary : 'Desactivar (DESACTIVAR) usuario' })
+  async inactiveUser(@Req() req : any){
+    try {
+      return await this.usersService.inactiveUser(req.user.user_ID);
     } catch (err : any) {
       errorHandler(err);
     }

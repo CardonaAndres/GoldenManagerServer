@@ -5,6 +5,7 @@ import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UsersService } from 'src/users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change.password.dto';
+import { UserStatus } from 'src/users/ts/enums';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +16,8 @@ export class AuthService {
 
     async login(loginData : LoginDto){
         const { user } = await this.userService.getUserByProperty('email', loginData.email);
-        if(!user || user.status_ID !== 1) 
+
+        if(!user || user.status_ID !== UserStatus.ACTIVE) 
             throw { message : 'Usuario no encontrado', status : 404 };
 
         const isPasswordValid = await bcrypt.compare(loginData.password, user.password);

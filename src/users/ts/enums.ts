@@ -7,5 +7,6 @@ export const enum Roles {
 export const enum UserStatus {
     ACTIVE = 1,
     INACTIVE = 2,
-    BLOCKED = 3
+    BLOCKED = 3,
+    SELLER = 4,
 }
