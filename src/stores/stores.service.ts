@@ -5,7 +5,7 @@ import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Store } from './entities/store.entity';
-import { Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { UsersService } from 'src/users/users.service';
 import { SERVER_URL } from 'src/app/configs/config';
 import { PaginationDto } from 'src/app/dtos/pagination.dto';
@@ -25,6 +25,9 @@ export class StoresService {
             skip : (page - 1) * limit,
             relations : {
                 user_owner_ID : true
+            },
+            where : {
+                status_ID : StoreStatus.ACTIVE
             }
         }); 
         
@@ -54,7 +57,11 @@ export class StoresService {
             take : limit,
             skip : (page - 1) * limit,
             where : {
-                user_owner_ID : user
+                user_owner_ID : user,
+                status_ID : Not(In([
+                    StoreStatus.DELETED,
+                    StoreStatus.BLOCKED,
+                ]))
             }
         });
 
@@ -111,7 +118,6 @@ export class StoresService {
     }
 
     async updateStore(store_ID : string, body : UpdateStoreDto, req : any, logo: Express.Multer.File){
-
         const { user } = await this.userService.getUserByProperty('user_ID', req.user.user_ID);
         if (!user) throw { message: 'No se ha encontrado el usuario', status: 404 };
         
@@ -119,13 +125,28 @@ export class StoresService {
         const store = await this.conn.findOne({
             where: {
                 store_ID,
-                user_owner_ID: user
+                user_owner_ID: user,
+                status_ID : In([
+                    StoreStatus.INACTIVE, 
+                    StoreStatus.ACTIVE,
+                ])
             },
             relations: ['user_owner_ID'] // Si es necesario para después limpiar password
         });
         
-        if (!store) throw { message: 'Tienda no encontrada o no pertenece al usuario', status: 404 };
+        if (!store) 
+            throw { message: 'Tienda no encontrada', status: 404 };
 
+        const statusNotAllowed = [
+            StoreStatus.BLOCKED, 
+            StoreStatus.DELETED, 
+            StoreStatus.PENDING,
+            StoreStatus.SUSPENDED
+        ]
+        
+        if(statusNotAllowed.includes(store.status_ID))
+            throw { message : 'Estado no valido, hablar con soporte por favor', status : 409 }
+        
         if (logo) {
             // Eliminar el logo anterior si existe
             if (store.logo_url) {
@@ -164,12 +185,14 @@ export class StoresService {
 
         const store = await this.conn.findOne({
             where: {
+                status_ID : Not(StoreStatus.DELETED),
                 store_ID,
                 user_owner_ID: user
             },
         });
 
-        if (!store) throw { message: 'Tienda no encontrada o no pertenece al usuario', status: 404 };
+        if (!store) 
+            throw { message: 'Tienda no encontrada o ya ha sido eliminada', status: 404 };
 
         await this.conn.update(store_ID, {
             status_ID : StoreStatus.DELETED
