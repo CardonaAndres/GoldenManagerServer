@@ -1,0 +1,30 @@
+# Node modules (esencial para no copiar dependencias locales dentro de la imagen)
+node_modules
+.vscode
+
+# Archivos de log
+*.log
+
+# Archivos de compilación TypeScript
+dist
+
+# Archivos de configuración de IDEs y editores
+.vscode
+.idea
+
+# Archivos de configuración de npm
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Archivos de configuración de OS
+.DS_Store
+Thumbs.db
+
+# Archivos de entorno
+.env
+
+# Otros archivos que no queremos copiar a la imagen de Docker
+*.tgz
+*.bak
+*.swp
