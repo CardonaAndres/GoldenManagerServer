@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { UsersService } from 'src/users/users.service';
 import { SERVER_URL } from 'src/app/configs/config';
 import { PaginationDto } from 'src/app/dtos/pagination.dto';
+import { StoreStatus } from './ts/enums';
 
 @Injectable()
 export class StoresService {
@@ -155,6 +156,28 @@ export class StoresService {
         return {
             message: 'Tienda actualizada correctamente'
         };
+    }
+
+    async deleteStrore(store_ID : string, user_ID : string){
+        const { user } = await this.userService.getUserByProperty('user_ID', user_ID);
+        if (!user) throw { message: 'No se ha encontrado el usuario', status: 404 };
+
+        const store = await this.conn.findOne({
+            where: {
+                store_ID,
+                user_owner_ID: user
+            },
+        });
+
+        if (!store) throw { message: 'Tienda no encontrada o no pertenece al usuario', status: 404 };
+
+        await this.conn.update(store_ID, {
+            status_ID : StoreStatus.DELETED
+        });
+
+        return {
+            message : 'Tienda eliminada con éxito'
+        }
     }
 
 }

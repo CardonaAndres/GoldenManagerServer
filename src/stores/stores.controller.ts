@@ -11,6 +11,7 @@ import { PaginationDto } from 'src/app/dtos/pagination.dto';
 import { 
   Body, 
   Controller, 
+  Delete, 
   Get, 
   Param, 
   Patch, 
@@ -86,6 +87,17 @@ export class StoresController {
   ){
     try {
       return await this.storesService.updateStore(store_ID, body, req, logo);
+    } catch (err: any) {
+      errorHandler(err);
+    }
+  }
+
+  @Delete('/:store_ID')
+  @UseGuards(CheckSellerGuard)
+  @ApiOperation({ summary : 'Eliminar tienda', description : 'Solo para administradores' })
+  async deleteStore(@Param('store_ID') store_ID : string, @Req() req : any){
+    try {
+        return this.storesService.deleteStrore(store_ID, req.user.user_ID);
     } catch (err: any) {
       errorHandler(err);
     }
