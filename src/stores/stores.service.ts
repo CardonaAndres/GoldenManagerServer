@@ -11,12 +11,56 @@ import { SERVER_URL } from 'src/app/configs/config';
 import { PaginationDto } from 'src/app/dtos/pagination.dto';
 import { StoreStatus } from './ts/enums';
 
+const UPLOADS_LOGO_PATH = path.join(process.cwd(), 'src', 'stores', 'uploads', 'logos');
+
 @Injectable()
 export class StoresService {
     constructor(
         @InjectRepository(Store) private readonly conn : Repository<Store>,
         private readonly userService : UsersService
     ){}
+
+    async getStoreByIdByAdmin(store_ID : string){
+        const store = await this.conn.findOne({
+            where : {
+                store_ID
+            },
+            relations : {
+                user_owner_ID : true
+            }
+        });
+
+        if(!store) throw { message : 'La tienda no fue encontrada', status : 404 }
+
+        return {
+            message : 'Tienda encontrada',
+            store
+        }
+    }
+
+    async getAllStoresToAdmin(pagination : PaginationDto){
+        const {  limit = 18, page = 1 } = pagination;
+        const [ stores, total ] = await this.conn.findAndCount({
+            take : limit,
+            skip : (page - 1) * limit,
+            relations : {
+                user_owner_ID : true
+            },
+        });
+
+        stores.map(store => store.user_owner_ID.password = "");
+
+        return {
+            message : 'Tarea éxitosa',
+            stores,
+            meta : {
+                page,
+                limit,
+                total,
+                total_pages : Math.ceil(total / limit),
+            }
+        }
+    }
 
     async getAllStores(pagination : PaginationDto){
         const { limit = 18, page = 1 } = pagination;
@@ -31,9 +75,7 @@ export class StoresService {
             }
         }); 
         
-        stores.map(store => {
-            store.user_owner_ID.password = ""
-        });
+        stores.map(store => store.user_owner_ID.password = "");
 
         return {
             message : 'Tarea éxitosa',
@@ -150,7 +192,6 @@ export class StoresService {
         if (logo) {
             // Eliminar el logo anterior si existe
             if (store.logo_url) {
-                const UPLOADS_LOGO_PATH = path.join(process.cwd(), 'src', 'stores', 'uploads', 'logos');
                 const oldLogoPath = path.join(
                     UPLOADS_LOGO_PATH,
                     path.basename(store.logo_url)
@@ -174,6 +215,44 @@ export class StoresService {
             ...store
         })
         
+        return {
+            message: 'Tienda actualizada correctamente'
+        };
+    }
+
+    async updateStoreByAdmin(store_ID : string, body : UpdateStoreDto, logo: Express.Multer.File){
+        const store = await this.conn.findOne({
+            where: { store_ID },
+            relations: ['user_owner_ID'] // Si es necesario para después limpiar password
+        });
+
+        if(!store) throw { message : 'La tienda no ha sido encontrada', status  : 404 }
+
+        if(logo){
+            if(store.logo_url){
+                const oldLogoPath = path.join(
+                    UPLOADS_LOGO_PATH,
+                    path.basename(store.logo_url)
+                );
+
+                try {
+                    await fs.promises.access(oldLogoPath, fs.constants.F_OK); // Verifica si existe
+                    await fs.promises.unlink(oldLogoPath); // Elimina
+                } catch (err) {
+                    console.warn('No se pudo eliminar el archivo:', oldLogoPath, err.message);
+                }
+            }
+
+            // Asignar nuevo logo
+            body.logo_url = SERVER_URL + '/stores/uploads/logos/' + logo.filename;
+        }
+
+        Object.assign(store, body);
+
+        await this.conn.update(store_ID, {
+            ...store
+        })
+    
         return {
             message: 'Tienda actualizada correctamente'
         };

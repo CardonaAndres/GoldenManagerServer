@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { StoreStatus } from '../ts/enums';
 import {
@@ -9,7 +10,6 @@ import {
   MaxLength,
   IsInt,
 } from 'class-validator';
-
 
 export class CreateStoreDto {
   @ApiProperty({
@@ -48,6 +48,7 @@ export class CreateStoreDto {
     required: false,
   })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber({}, { message: 'El estado debe ser un número.' })
   @IsInt({ message: 'El estado debe ser un número entero.' })
   status_ID: number = StoreStatus.PENDING;

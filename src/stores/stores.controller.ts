@@ -8,6 +8,7 @@ import { CheckSellerGuard } from './guards/check.seller.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { imageFileFilter, logoStorage } from '../app/configs/multer';
 import { PaginationDto } from 'src/app/dtos/pagination.dto';
+import { CheckAdminRoleGuard } from 'src/app/guards/check.role.admin.guard';
 import { 
   Body, 
   Controller, 
@@ -34,6 +35,34 @@ export class StoresController {
     try {
       return await this.storesService.getAllStores(pagination)
     } catch (err : any){
+      errorHandler(err);
+    }
+  }
+
+  @Get('/to-admin')
+  @UseGuards(CheckAdminRoleGuard)
+  @ApiOperation({ 
+    summary : 'Obtener todas las tiendas (ADMIN)', 
+    description : 'Todas las tiendas para el administrador gestionarlas sin importar su estado' 
+  })
+  async getAllStoresToAdmin(@Query() pagination : PaginationDto){
+    try {
+      return await this.storesService.getAllStoresToAdmin(pagination);
+    } catch (err : any) {
+      errorHandler(err);
+    }
+  }
+
+  @ApiOperation({ 
+    summary : 'Obtener todas una tienda por su ID (ADMIN)', 
+    description : 'Solo para ADMINS' 
+  })
+  @Get('/by-admin/:store_ID')
+  @UseGuards(CheckAdminRoleGuard)
+  async getStoreByIdByAdmin(@Param('store_ID') store_ID : string){
+    try {
+      return await this.storesService.getStoreByIdByAdmin(store_ID)
+    } catch (err : any) {
       errorHandler(err);
     }
   }
@@ -87,6 +116,29 @@ export class StoresController {
   ){
     try {
       return await this.storesService.updateStore(store_ID, body, req, logo);
+    } catch (err: any) {
+      errorHandler(err);
+    }
+  }
+
+  @Patch('/by-admin/:store_ID')
+  @UseGuards(CheckSellerGuard)
+  @ApiOperation({ 
+    summary: 'Actualizar una tienda (ADMIN)', 
+    description: 'Solo para vendedores' 
+  })
+  @UseInterceptors(FileInterceptor('logo',{
+    storage: logoStorage('src/stores/uploads/logos'),
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: imageFileFilter
+  }))
+  async updateStoreByAdmin(
+    @Param('store_ID') store_ID: string,
+    @Body() body: UpdateStoreDto,
+    @UploadedFile() logo: Express.Multer.File
+  ){
+    try {
+      return await this.storesService.updateStoreByAdmin(store_ID, body, logo)
     } catch (err: any) {
       errorHandler(err);
     }
