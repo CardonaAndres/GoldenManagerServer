@@ -1,4 +1,4 @@
-import { Controller, Get, Body, Patch, UseGuards, Req, Query } from '@nestjs/common';
+import { Controller, Get, Body, Patch, UseGuards, Req, Query, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -69,8 +69,8 @@ export class UsersController {
     }
   }
 
-  @Patch('/inactive')
-  @ApiOperation({ summary : 'Desactivar (DESACTIVAR) usuario' })
+  @Delete()
+  @ApiOperation({ summary : 'Eliminar (DESACTIVAR) usuario' })
   async inactiveUser(@Req() req : any){
     try {
       return await this.usersService.inactiveUser(req.user.user_ID);
