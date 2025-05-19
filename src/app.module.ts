@@ -4,6 +4,8 @@ import { DB_CREDENTIALS } from './app/configs/config';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { StoresModule } from './stores/stores.module';
+import { ProductsModule } from './products/products.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -21,7 +23,9 @@ import { StoresModule } from './stores/stores.module';
     }),
     AuthModule,
     UsersModule,
-    StoresModule
+    StoresModule,
+    ProductsModule,
+    CategoriesModule
   ],
   controllers: [],
   providers: [],

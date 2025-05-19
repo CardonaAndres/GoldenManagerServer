@@ -54,7 +54,7 @@ export class StoresController {
   }
 
   @ApiOperation({ 
-    summary : 'Obtener todas una tienda por su ID (ADMIN)', 
+    summary : 'Obtener una tienda por su ID (ADMIN)', 
     description : 'Solo para ADMINS' 
   })
   @Get('/by-admin/:store_ID')
